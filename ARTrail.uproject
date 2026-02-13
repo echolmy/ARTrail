@@ -21,6 +21,10 @@
 		{
 			"Name": "Bolt6AR",
 			"Enabled": false
+		},
+		{
+			"Name": "JsonBlueprintUtilities",
+			"Enabled": true
 		}
 	]
 }
