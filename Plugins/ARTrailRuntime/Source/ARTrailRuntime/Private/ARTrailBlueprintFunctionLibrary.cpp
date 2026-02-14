@@ -8,8 +8,8 @@
 
 constexpr double METER_TO_CM = 100.0;
 
-bool UARTrailBlueprintFunctionLibrary::ParseTrailFromJsonFile(const FString &FilePath, TArray<FARTrail> &Trails,
-															  FString &OutErr)
+bool UARTrailBlueprintFunctionLibrary::ParseTrailFromJsonFile(const FString& FilePath, TArray<FARTrail>& Trails,
+                                                              FString& OutErr)
 {
 	Trails.Reset();
 	OutErr.Reset();
@@ -48,8 +48,8 @@ bool UARTrailBlueprintFunctionLibrary::ParseTrailFromJsonFile(const FString &Fil
 	return ParseTrailFromJsonString(JsonStr, Trails, OutErr);
 }
 
-bool UARTrailBlueprintFunctionLibrary::ParseTrailFromJsonString(const FString &JsonString, TArray<FARTrail> &Trails,
-																FString &OutErr)
+bool UARTrailBlueprintFunctionLibrary::ParseTrailFromJsonString(const FString& JsonString, TArray<FARTrail>& Trails,
+                                                                FString& OutErr)
 {
 	Trails.Reset();
 	OutErr.Reset();
@@ -83,7 +83,7 @@ bool UARTrailBlueprintFunctionLibrary::ParseTrailFromJsonString(const FString &J
 	InTrails.Reserve(RootObject->Values.Num());
 
 	// 3. Parse JSON
-	for (const auto &Pair : RootObject->Values)
+	for (const auto& Pair : RootObject->Values)
 	{
 		// 3.1 Parse timestamp and convert it to int64
 		int64 Timestamp = 0;
@@ -95,7 +95,14 @@ bool UARTrailBlueprintFunctionLibrary::ParseTrailFromJsonString(const FString &J
 		}
 
 		// 3.2 Value (key:timestamp) should be a JSON object
-		const auto &TrailObj = Pair.Value.IsValid() ? Pair.Value->AsObject() : nullptr;
+		if (!Pair.Value.IsValid() || Pair.Value->Type != EJson::Object)
+		{
+			OutErr = FString::Printf(TEXT("Trail point at timestamp '%s' should be a JSON object."), *Pair.Key);
+			UE_LOG(LogTemp, Warning, TEXT("%s"), *OutErr);
+			return false;
+		}
+
+		const auto& TrailObj = Pair.Value->AsObject();
 		if (!TrailObj.IsValid())
 		{
 			OutErr = FString::Printf(TEXT("Trail point at timestamp '%s' should be a JSON object."), *Pair.Key);
@@ -104,10 +111,11 @@ bool UARTrailBlueprintFunctionLibrary::ParseTrailFromJsonString(const FString &J
 		}
 
 		// 3.3 Extract position
-		const TArray<TSharedPtr<FJsonValue>> *TrailPosArr = nullptr;
+		const TArray<TSharedPtr<FJsonValue>>* TrailPosArr = nullptr;
 		if (!TrailObj->TryGetArrayField(TEXT("position"), TrailPosArr) || !TrailPosArr || TrailPosArr->Num() != 3)
 		{
-			OutErr = FString::Printf(TEXT("Trail point at timestamp '%s' should have an array of 3 numbers."), *Pair.Key);
+			OutErr = FString::Printf(
+				TEXT("Trail point at timestamp '%s' should have an array of 3 numbers."), *Pair.Key);
 			UE_LOG(LogTemp, Warning, TEXT("%s"), *OutErr);
 			return false;
 		}
@@ -117,9 +125,11 @@ bool UARTrailBlueprintFunctionLibrary::ParseTrailFromJsonString(const FString &J
 		double z = 0.0;
 
 		if (!(*TrailPosArr)[0].IsValid() || !(*TrailPosArr)[1].IsValid() || !(*TrailPosArr)[2].IsValid() ||
-			!(*TrailPosArr)[0]->TryGetNumber(x) || !(*TrailPosArr)[1]->TryGetNumber(y) || !(*TrailPosArr)[2]->TryGetNumber(z))
+			!(*TrailPosArr)[0]->TryGetNumber(x) || !(*TrailPosArr)[1]->TryGetNumber(y) || !(*TrailPosArr)[2]->
+			TryGetNumber(z))
 		{
-			OutErr = FString::Printf(TEXT("Trail point at timestamp '%s' should have numeric values for position."), *Pair.Key);
+			OutErr = FString::Printf(
+				TEXT("Trail point at timestamp '%s' should have numeric values for position."), *Pair.Key);
 			UE_LOG(LogTemp, Warning, TEXT("%s"), *OutErr);
 			return false;
 		}
