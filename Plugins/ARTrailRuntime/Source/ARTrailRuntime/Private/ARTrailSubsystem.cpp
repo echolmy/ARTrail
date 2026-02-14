@@ -127,6 +127,14 @@ void UARTrailSubsystem::GetCurrentWindowTrails(TArray<FARTrail> &OutTrails) cons
 
 void UARTrailSubsystem::SetCurrentTime(float InCurrentTimeSeconds)
 {
+	if (Trails.IsEmpty())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("SetCurrentTime ignored: Trails is empty."));
+		CurrentTime = 0;
+		ResetWindowState();
+		CurrentWindowTrails.Reset();
+		return;
+	}
 	const int64 RelativeUs = UARTrailBlueprintFunctionLibrary::SecondsToMicroseconds(InCurrentTimeSeconds);
 	const int64 BaseTimestampUs = Trails[0].Timestamp;
 	const int64 TargetTimestampUs = BaseTimestampUs + RelativeUs;
