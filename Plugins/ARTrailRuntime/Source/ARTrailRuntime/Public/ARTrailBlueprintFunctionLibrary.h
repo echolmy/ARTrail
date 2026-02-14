@@ -18,7 +18,7 @@ class ARTRAILRUNTIME_API UARTrailBlueprintFunctionLibrary : public UBlueprintFun
 	
 public:
 	UFUNCTION(BlueprintCallable, Category="ARTrail | JSON")
-	static bool LoadTrailFromJsonFile(const FString& FilePath, TArray<FARTrail>& Trails, FString& OutErr);
+	static bool ParseTrailFromJsonFile(const FString& FilePath, TArray<FARTrail>& Trails, FString& OutErr);
 	
 	UFUNCTION(BlueprintCallable, Category="ARTrail | JSON")
 	static bool ParseTrailFromJsonString(const FString& JsonString, TArray<FARTrail>& Trails, FString& OutErr);
