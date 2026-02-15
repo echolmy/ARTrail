@@ -14,7 +14,9 @@ void UARTrailSubsystem::Initialize(FSubsystemCollectionBase &Collection)
 void UARTrailSubsystem::Deinitialize()
 {
 	Trails.Reset();
-	CurrentWindowTrails.Reset();
+	// CurrentWindowTrails.Reset();
+	CurrentWindowPositions.Reset();
+	CurrentWindowVelocities.Reset();
 	ResetWindowState();
 
 	Super::Deinitialize();
@@ -120,9 +122,25 @@ void UARTrailSubsystem::GetAllTrails(TArray<FARTrail> &OutTrails) const
 	OutTrails = Trails;
 }
 
-void UARTrailSubsystem::GetCurrentWindowTrails(TArray<FARTrail> &OutTrails) const
+// void UARTrailSubsystem::GetCurrentWindowTrails(TArray<FARTrail> &OutTrails) const
+// {
+// 	OutTrails = CurrentWindowTrails;
+// }
+
+void UARTrailSubsystem::GetCurrentWindowPositions(TArray<FVector> &OutPositions) const
 {
-	OutTrails = CurrentWindowTrails;
+	OutPositions = CurrentWindowPositions;
+}
+
+void UARTrailSubsystem::GetCurrentWindowVelocities(TArray<float> &OutVelocities) const
+{
+	OutVelocities = CurrentWindowVelocities;
+}
+
+void UARTrailSubsystem::GetCurrentWindowArrays(TArray<FVector> &OutPositions, TArray<float> &OutVelocities) const
+{
+	OutPositions = CurrentWindowPositions;
+	OutVelocities = CurrentWindowVelocities;
 }
 
 void UARTrailSubsystem::SetCurrentTime(float InCurrentTimeSeconds)
@@ -132,7 +150,9 @@ void UARTrailSubsystem::SetCurrentTime(float InCurrentTimeSeconds)
 		UE_LOG(LogTemp, Warning, TEXT("SetCurrentTime ignored: Trails is empty."));
 		CurrentTime = 0;
 		ResetWindowState();
-		CurrentWindowTrails.Reset();
+		// CurrentWindowTrails.Reset();
+		CurrentWindowPositions.Reset();
+		CurrentWindowVelocities.Reset();
 		return;
 	}
 	const int64 RelativeUs = UARTrailBlueprintFunctionLibrary::SecondsToMicroseconds(InCurrentTimeSeconds);
@@ -159,7 +179,9 @@ void UARTrailSubsystem::ResetWindowState()
 
 void UARTrailSubsystem::UpdateWindow()
 {
-	CurrentWindowTrails.Reset();
+	// CurrentWindowTrails.Reset();
+	CurrentWindowPositions.Reset();
+	CurrentWindowVelocities.Reset();
 	if (Trails.IsEmpty() || TrailDuration <= 0)
 	{
 		return;
@@ -218,10 +240,15 @@ void UARTrailSubsystem::UpdateWindow()
 	{
 		return;
 	}
-	CurrentWindowTrails.Reserve(Count);
+	// CurrentWindowTrails.Reserve(Count);
+	CurrentWindowPositions.Reserve(Count);
+	CurrentWindowVelocities.Reserve(Count);
 	for (int32 i = WindowStartIdx; i < WindowEndIdx; ++i)
 	{
-		CurrentWindowTrails.Add(Trails[i]);
+		const FARTrail &Trail = Trails[i];
+		// CurrentWindowTrails.Add(Trail);
+		CurrentWindowPositions.Add(Trail.Position);
+		CurrentWindowVelocities.Add(Trail.Velocity);
 	}
 }
 
