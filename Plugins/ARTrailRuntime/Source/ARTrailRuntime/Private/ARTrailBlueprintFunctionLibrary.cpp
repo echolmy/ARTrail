@@ -6,7 +6,6 @@
 #include "Misc/DefaultValueHelper.h"
 #include "Serialization/JsonSerializer.h"
 
-constexpr double METER_TO_CM = 100.0;
 
 bool UARTrailBlueprintFunctionLibrary::ParseTrailFromJsonFile(const FString& FilePath, TArray<FARTrail>& Trails,
                                                               FString& OutErr)
@@ -146,7 +145,7 @@ bool UARTrailBlueprintFunctionLibrary::ParseTrailFromJsonString(const FString& J
 		// 3.5 Write into trails array
 		FARTrail TrailPoint;
 		TrailPoint.Timestamp = Timestamp;
-		TrailPoint.Position = FVector(x * METER_TO_CM, y * METER_TO_CM, z * METER_TO_CM);
+		TrailPoint.Position = FVector(x, y, z) * 100.0; // m -> cm
 		TrailPoint.Velocity = Velocity;
 
 		InTrails.Add(MoveTemp(TrailPoint));

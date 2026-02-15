@@ -46,8 +46,17 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "ARTrail")
 	void GetAllTrails(TArray<FARTrail> &OutTrails) const;
 
+	// UFUNCTION(BlueprintCallable, Category = "ARTrail")
+	// void GetCurrentWindowTrails(TArray<FARTrail> &OutTrails) const;
+
 	UFUNCTION(BlueprintCallable, Category = "ARTrail")
-	void GetCurrentWindowTrails(TArray<FARTrail> &OutTrails) const;
+	void GetCurrentWindowPositions(TArray<FVector> &OutPositions) const;
+
+	UFUNCTION(BlueprintCallable, Category = "ARTrail")
+	void GetCurrentWindowVelocities(TArray<float> &OutVelocities) const;
+
+	UFUNCTION(BlueprintCallable, Category = "ARTrail")
+	void GetCurrentWindowArrays(TArray<FVector> &OutPositions, TArray<float> &OutVelocities) const;
 
 	UFUNCTION(BlueprintCallable, Category = "ARTrail")
 	void SetPlaying(bool bInAdvanced) { bAdvanced = bInAdvanced; }
@@ -79,7 +88,11 @@ private:
 	// All trails loaded from the JSON file
 	TArray<FARTrail> Trails;
 	// Trails that fall within the current time window defined by CurrentTime and TrailDuration
-	TArray<FARTrail> CurrentWindowTrails;
+	// TArray<FARTrail> CurrentWindowTrails;
+	
+	// Cached arrays for direct Niagara parameter upload from Blueprint/C++.
+	TArray<FVector> CurrentWindowPositions;
+	TArray<float> CurrentWindowVelocities;
 
 	int64 TrailDuration = 500000; // default 0.5s
 
