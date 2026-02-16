@@ -23,7 +23,6 @@ struct FARTrail
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "ARTrail")
 	float Velocity = 0.0f;
-	// Velocity in cm/s, can be used for visual effects like changing trail width or color based on speed
 };
 
 /**
@@ -57,6 +56,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "ARTrail")
 	void GetCurrentWindowArrays(TArray<FVector> &OutPositions, TArray<float> &OutVelocities) const;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ARTrail")
+	float GetMaxTrailVelocity() const;
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "ARTrail")
+	float GetMinTrailVelocity() const;
 
 	UFUNCTION(BlueprintCallable, Category = "ARTrail")
 	void SetPlaying(bool bInAdvanced) { bAdvanced = bInAdvanced; }

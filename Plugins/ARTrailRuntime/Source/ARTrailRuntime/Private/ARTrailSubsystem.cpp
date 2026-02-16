@@ -143,6 +143,36 @@ void UARTrailSubsystem::GetCurrentWindowArrays(TArray<FVector> &OutPositions, TA
 	OutVelocities = CurrentWindowVelocities;
 }
 
+float UARTrailSubsystem::GetMaxTrailVelocity() const
+{
+	if (Trails.IsEmpty())
+	{
+		return 0.0f;
+	}
+
+	float MaxVelocity = Trails[0].Velocity;
+	for (int32 i = 1; i < Trails.Num(); ++i)
+	{
+		MaxVelocity = FMath::Max(MaxVelocity, Trails[i].Velocity);
+	}
+	return MaxVelocity;
+}
+
+float UARTrailSubsystem::GetMinTrailVelocity() const
+{
+	if (Trails.IsEmpty())
+	{
+		return 0.0f;
+	}
+
+	float MinVelocity = Trails[0].Velocity;
+	for (int32 i = 1; i < Trails.Num(); ++i)
+	{
+		MinVelocity = FMath::Min(MinVelocity, Trails[i].Velocity);
+	}
+	return MinVelocity;
+}
+
 void UARTrailSubsystem::SetCurrentTime(float InCurrentTimeSeconds)
 {
 	if (Trails.IsEmpty())
