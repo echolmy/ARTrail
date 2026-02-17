@@ -75,7 +75,7 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "ARTrail | Time")
 	int64 CurrentTime;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ARTrail")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ARTrail", meta=(ClampMin="0.1"))
 	float SpeedRate = 1.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "ARTrail")

@@ -30,11 +30,10 @@ void UARTrailSubsystem::Tick(float DeltaTime)
 	{
 		return;
 	}
+	
+	const int64 DeltaUs = UARTrailBlueprintFunctionLibrary::SecondsToMicroseconds(DeltaTime * SpeedRate);
 
-	// Avoid negative or zero delta time which may cause unexpected behavior in window update
-	const int64 DeltaUs = UARTrailBlueprintFunctionLibrary::SecondsToMicroseconds(DeltaTime * FMath::Max(0.0f, SpeedRate));
-
-	// Move current time forward by delta, but clamp to the last trail's timestamp to avoid overshooting
+	// Move current time forward by delta, clamping to the last trail's timestamp to avoid overshooting
 	CurrentTime = FMath::Min(CurrentTime + DeltaUs, Trails.Last().Timestamp);
 	UpdateWindow();
 
