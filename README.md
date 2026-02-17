@@ -9,6 +9,7 @@ Its core runtime capability is provided by the `ARTrailRuntime` plugin, which co
 - Load trail files asynchronously to avoid blocking the game thread.
 - Filter trail points by current time and window duration through `WorldSubsystem`.
 - Output position and velocity arrays in the current window for direct use in Blueprint or Niagara.
+- Dynamically adjust trail color and width by velocity: higher speed makes trails thicker and yellow, lower speed makes trails thinner and blue.
 - Playback speed can be adjusted to control Niagara animation speed.
 - Provide automated tests for JSON parsing and windowing logic.
 
@@ -42,5 +43,5 @@ ARTrail/
 - `Plugins/ARTrailRuntime/Source/ARTrailRuntime/Private/Tests/ARTrailSubsystemTests.cpp`
 
 ## Compatibility
-- Target platform: Windows
+- Target platform: Windows x64
 - Engine version: Unreal Engine 5.7
