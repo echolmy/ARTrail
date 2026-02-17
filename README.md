@@ -13,6 +13,11 @@ Its core runtime capability is provided by the `ARTrailRuntime` plugin, which co
 - Playback speed can be adjusted to control Niagara animation speed.
 - Provide automated tests for JSON parsing and windowing logic.
 
+## Controls
+Hold the left mouse button to rotate.
+Hold the right mouse button and use WASD to pan.
+Use the mouse wheel to zoom.
+
 ## Project Structure
 ```text
 ARTrail/
@@ -27,6 +32,8 @@ ARTrail/
 |- Config/
 \- ExternalDataToUE.md                 # External data integration design notes
 ```
+
+Note: To replace the test JSON file, overwrite `trail-points.json` at the original path and keep the same filename.
 
 ## Key Code Entry Points
 - `Plugins/ARTrailRuntime/Source/ARTrailRuntime/Public/ARTrailSubsystem.h`  
