@@ -9,16 +9,19 @@
 
 namespace ARTrailSubsystemTests
 {
+	// Poll helper for async tests: pump GameThread tasks so AsyncTask callbacks can run.
 	bool WaitUntil(const TFunctionRef<bool()>& Predicate, const double TimeoutSeconds)
 	{
 		const double StartTime = FPlatformTime::Seconds();
 		while (!Predicate())
 		{
+			// Execute queued tasks posted back to GameThread by subsystem async loading.
 			FTaskGraphInterface::Get().ProcessThreadUntilIdle(ENamedThreads::GameThread);
 			if (FPlatformTime::Seconds() - StartTime > TimeoutSeconds)
 			{
 				return false;
 			}
+			// Avoid tight spinning while waiting for worker-thread parsing to finish.
 			FPlatformProcess::Sleep(0.01f);
 		}
 
@@ -33,6 +36,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FARTrailSubsystemSetCurrentTimeWithEmptyTrailsTest::RunTest(const FString& Parameters)
 {
+	// Empty state: time setters and query APIs should remain safe with no data loaded.
 	UARTrailSubsystem* Subsystem = NewObject<UARTrailSubsystem>(GetTransientPackage());
 	if (!TestNotNull(TEXT("Subsystem instance should be created."), Subsystem))
 	{
@@ -69,6 +73,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FARTrailSubsystemAsyncLoadAndWindowBehaviorTest::RunTest(const FString& Parameters)
 {
+	// End-to-end subsystem check: async load, sorted data, clamped time, window cache, and play toggle.
 	UARTrailSubsystem* Subsystem = NewObject<UARTrailSubsystem>(GetTransientPackage());
 	if (!TestNotNull(TEXT("Subsystem instance should be created."), Subsystem))
 	{
@@ -78,6 +83,7 @@ bool FARTrailSubsystemAsyncLoadAndWindowBehaviorTest::RunTest(const FString& Par
 	Subsystem->AddToRoot();
 
 	Subsystem->LoadTrailsFromJsonFileAsync(TEXT("trail-points.json"));
+	// Wait for async parse + GameThread handoff that writes Trails into subsystem state.
 	const bool bCompleted = ARTrailSubsystemTests::WaitUntil(
 		[Subsystem]()
 		{
@@ -135,7 +141,9 @@ bool FARTrailSubsystemAsyncLoadAndWindowBehaviorTest::RunTest(const FString& Par
 	Subsystem->SetCurrentTime(0.0f);
 	if (!AllTrails.IsEmpty())
 	{
-		TestEqual(TEXT("SetCurrentTime should clamp low bound to first timestamp."), Subsystem->CurrentTime, AllTrails[0].Timestamp);
+		// Current time input is relative seconds; subsystem clamps to loaded timestamp range.
+		TestEqual(TEXT("SetCurrentTime should clamp low bound to first timestamp."), Subsystem->CurrentTime,
+		          AllTrails[0].Timestamp);
 	}
 
 	TArray<FVector> StartWindowPositions;
@@ -150,7 +158,8 @@ bool FARTrailSubsystemAsyncLoadAndWindowBehaviorTest::RunTest(const FString& Par
 	Subsystem->SetCurrentTime(1000000.0f);
 	if (!AllTrails.IsEmpty())
 	{
-		TestEqual(TEXT("SetCurrentTime should clamp high bound to last timestamp."), Subsystem->CurrentTime, AllTrails.Last().Timestamp);
+		TestEqual(TEXT("SetCurrentTime should clamp high bound to last timestamp."), Subsystem->CurrentTime,
+		          AllTrails.Last().Timestamp);
 	}
 
 	TArray<FVector> EndWindowPositions;
@@ -178,6 +187,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FARTrailSubsystemWindowGroundTruthTrailPointsFileTest::RunTest(const FString& Parameters)
 {
+	// Ground truth verification: compare subsystem window output to independently filtered JSON results.
 	UARTrailSubsystem* Subsystem = NewObject<UARTrailSubsystem>(GetTransientPackage());
 	if (!TestNotNull(TEXT("Subsystem instance should be created."), Subsystem))
 	{
@@ -216,7 +226,7 @@ bool FARTrailSubsystemWindowGroundTruthTrailPointsFileTest::RunTest(const FStrin
 	TArray<FARTrail> ParsedTrails;
 	FString ParseErr;
 	const bool bParsed = UARTrailBlueprintFunctionLibrary::ParseTrailFromJsonFile(JsonFilePath, ParsedTrails, ParseErr);
-	if (!TestTrue(TEXT("trail-points JSON should parse successfully for ground-truth comparison."), bParsed))
+	if (!TestTrue(TEXT("trail-points JSON should parse successfully for ground truth comparison."), bParsed))
 	{
 		AddError(FString::Printf(TEXT("ParseTrailFromJsonFile failed: %s"), *ParseErr));
 		Subsystem->RemoveFromRoot();
@@ -238,6 +248,7 @@ bool FARTrailSubsystemWindowGroundTruthTrailPointsFileTest::RunTest(const FStrin
 	const int64 BaseTimestampUs = ParsedTrails[0].Timestamp;
 	const int64 LastTimestampUs = ParsedTrails.Last().Timestamp;
 	const int64 DurationUs = UARTrailBlueprintFunctionLibrary::SecondsToMicroseconds(TrailDurationSeconds);
+	// Mirror subsystem semantics: relative seconds -> absolute timestamp -> clamp -> inclusive window.
 	const int64 TargetTimestampUs = BaseTimestampUs +
 		UARTrailBlueprintFunctionLibrary::SecondsToMicroseconds(CurrentTimeSeconds);
 	const int64 CurrentTimestampUs = FMath::Clamp(TargetTimestampUs, BaseTimestampUs, LastTimestampUs);
@@ -253,9 +264,9 @@ bool FARTrailSubsystemWindowGroundTruthTrailPointsFileTest::RunTest(const FStrin
 		}
 	}
 
-	TestTrue(TEXT("Ground-truth window should contain at least one point."), ExpectedPositions.Num() > 0);
+	TestTrue(TEXT("Ground truth window should contain at least one point."), ExpectedPositions.Num() > 0);
 	TestEqual(
-		TEXT("Ground-truth point count from JSON window should equal subsystem current window count."),
+		TEXT("Ground truth point count from JSON window should equal subsystem current window count."),
 		ActualPositions.Num(),
 		ExpectedPositions.Num());
 

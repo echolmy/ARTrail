@@ -6,6 +6,7 @@
 
 namespace ARTrailBlueprintFunctionLibraryTests
 {
+	// Shared fixtures used by multiple tests to keep expectations consistent.
 	constexpr double FloatTolerance = 0.001;
 	const FString ValidSingleTrailJson = TEXT("{\"1000000\":{\"position\":[1.5,2.0,-3.25],\"velocity\":4.5}}");
 }
@@ -19,6 +20,7 @@ bool FParseTrailFromJsonStringEmptyInputTest::RunTest(const FString& Parameters)
 {
 	TArray<FARTrail> Trails;
 	FString OutErr = TEXT("seed");
+	// The parser logs an expected error on this branch; mark it to avoid noisy test output.
 	AddExpectedErrorPlain(TEXT("JsonString is empty."));
 
 	const bool bParsed = UARTrailBlueprintFunctionLibrary::ParseTrailFromJsonString(TEXT(" \t\n"), Trails, OutErr);
@@ -38,6 +40,7 @@ bool FParseTrailFromJsonStringInvalidJsonTest::RunTest(const FString& Parameters
 {
 	TArray<FARTrail> Trails;
 	FString OutErr;
+	// This test targets JSON deserialization failure before schema checks begin.
 	AddExpectedErrorPlain(TEXT("Failed to deserialize JSON. Root object is invalid."));
 
 	const bool bParsed = UARTrailBlueprintFunctionLibrary::ParseTrailFromJsonString(TEXT("{\"broken_json\":"), Trails, OutErr);
@@ -58,6 +61,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FParseTrailFromJsonStringInvalidTimestampTest::RunTest(const FString& Parameters)
 {
+	// Timestamp keys are part of the schema and must parse as int64 microseconds.
 	const FString JsonString = TEXT("{\"not_a_number\":{\"position\":[0,0,0],\"velocity\":1.0}}");
 	TArray<FARTrail> Trails;
 	FString OutErr;
@@ -79,6 +83,7 @@ bool FParseTrailFromJsonStringEmptyRootObjectTest::RunTest(const FString& Parame
 {
 	TArray<FARTrail> Trails;
 	FString OutErr;
+	// Root object exists but contains no trail samples, which is treated as invalid input.
 	AddExpectedErrorPlain(TEXT("JSON root object is empty."));
 
 	const bool bParsed = UARTrailBlueprintFunctionLibrary::ParseTrailFromJsonString(TEXT("{}"), Trails, OutErr);
@@ -114,6 +119,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FParseTrailFromJsonStringInvalidPositionArrayTest::RunTest(const FString& Parameters)
 {
+	// Position must be exactly [x, y, z]; wrong shape should fail fast.
 	const FString JsonString = TEXT("{\"1000000\":{\"position\":[1,2],\"velocity\":1.0}}");
 	TArray<FARTrail> Trails;
 	FString OutErr;
@@ -133,6 +139,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FParseTrailFromJsonStringNonNumericPositionTest::RunTest(const FString& Parameters)
 {
+	// Position array entries are required to be numeric for FVector construction.
 	const FString JsonString = TEXT("{\"1000000\":{\"position\":[1,\"bad\",3],\"velocity\":1.0}}");
 	TArray<FARTrail> Trails;
 	FString OutErr;
@@ -152,6 +159,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FParseTrailFromJsonStringMissingVelocityTest::RunTest(const FString& Parameters)
 {
+	// Velocity is mandatory in each sample object.
 	const FString JsonString = TEXT("{\"1000000\":{\"position\":[1,2,3]}}");
 	TArray<FARTrail> Trails;
 	FString OutErr;
@@ -185,6 +193,7 @@ bool FParseTrailFromJsonStringSuccessTest::RunTest(const FString& Parameters)
 
 	if (Trails.Num() == 1)
 	{
+		// Happy-path contract: timestamp is preserved and position converts from meters to centimeters.
 		const FARTrail& Trail = Trails[0];
 		TestEqual(TEXT("Timestamp should match source JSON key."), Trail.Timestamp, int64(1000000));
 		TestTrue(
@@ -210,6 +219,7 @@ bool FParseTrailFromJsonFileEmptyPathTest::RunTest(const FString& Parameters)
 {
 	TArray<FARTrail> Trails;
 	FString OutErr;
+	// File API should short-circuit before any path normalization or file IO.
 	AddExpectedErrorPlain(TEXT("FilePath is empty."));
 
 	const bool bParsed = UARTrailBlueprintFunctionLibrary::ParseTrailFromJsonFile(TEXT(""), Trails, OutErr);
@@ -229,6 +239,7 @@ bool FParseTrailFromJsonFileNotFoundTest::RunTest(const FString& Parameters)
 {
 	TArray<FARTrail> Trails;
 	FString OutErr;
+	// Relative path is resolved against Content and then validated for existence.
 	AddExpectedErrorPlain(TEXT("JSON file not found."));
 
 	const bool bParsed =
@@ -247,6 +258,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(
 
 bool FParseTrailFromJsonFileSuccessTest::RunTest(const FString& Parameters)
 {
+	// Integration-style check for the file wrapper over ParseTrailFromJsonString.
 	TArray<FARTrail> Trails;
 	FString OutErr;
 	const bool bParsed = UARTrailBlueprintFunctionLibrary::ParseTrailFromJsonFile(TEXT("trail-points.json"), Trails, OutErr);
