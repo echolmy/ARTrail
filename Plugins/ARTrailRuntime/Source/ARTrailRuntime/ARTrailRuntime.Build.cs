@@ -38,6 +38,8 @@ public class ARTrailRuntime : ModuleRules
 				"Engine",
 				"Json",
 				"JsonUtilities",
+				"Networking",
+				"Sockets",
 				// "Slate",
 				// "SlateCore",
 				// ... add private dependencies that you statically link with here ...	
