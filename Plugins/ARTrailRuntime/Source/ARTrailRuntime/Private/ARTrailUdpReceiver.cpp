@@ -10,6 +10,8 @@ FARTrailUdpReceiver::~FARTrailUdpReceiver()
 
 bool FARTrailUdpReceiver::Start()
 {
+	UE_LOG(LogTemp, Display, TEXT("ARTrailUdpReceiver::Start()"));
+	
 	if (bRunning.Load())
 	{
 		return true;
@@ -50,7 +52,9 @@ bool FARTrailUdpReceiver::DequeueMessage(FARTrailUdpMessage& OutMessage)
 
 bool FARTrailUdpReceiver::CreateSocket()
 {
-	const FIPv4Endpoint ListenEndpoint(FIPv4Address::InternalLoopback, Port);
+	UE_LOG(LogTemp, Display, TEXT("ARTrailUdpReceiver::CreateSocket()"));
+	
+	const FIPv4Endpoint ListenEndpoint(FIPv4Address::Any, Port);
 	Socket = FUdpSocketBuilder(TEXT("ARTrail_UDP_Socket"))
 	         .AsReusable()
 	         .AsNonBlocking()
@@ -69,6 +73,8 @@ void FARTrailUdpReceiver::DestroySocket()
 
 void FARTrailUdpReceiver::HandleDataReceived(const FArrayReaderPtr& ReaderPtr, const FIPv4Endpoint& Sender)
 {
+	// UE_LOG(LogTemp, Warning, TEXT("[Recv] receiver=%p bytes=%d from %s"), this, ReaderPtr->Num(), *Sender.ToString());
+
 	if (!ReaderPtr || ReaderPtr->Num() <= 0 || !bRunning.Load())
 	{
 		return;

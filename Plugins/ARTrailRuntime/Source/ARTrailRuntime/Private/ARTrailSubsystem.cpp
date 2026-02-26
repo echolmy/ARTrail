@@ -5,10 +5,22 @@
 #include "ARTrailBlueprintFunctionLibrary.h"
 #include "Async/Async.h"
 
-void UARTrailSubsystem::Initialize(FSubsystemCollectionBase &Collection)
+void UARTrailSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
+	UE_LOG(LogTemp, Display, TEXT("UARTrailSubsystem::Initialize()"));
 	Super::Initialize(Collection);
 	// ResetWindowState();
+	UWorld* World = GetWorld();
+	if (!World || !World->IsGameWorld())
+	{
+		return;
+	}
+	
+	UdpReceiver = MakeUnique<FARTrailUdpReceiver>(8080);
+	if (!UdpReceiver->Start())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Failed to start UDP receiver."));
+	}
 }
 
 void UARTrailSubsystem::Deinitialize()
@@ -19,6 +31,12 @@ void UARTrailSubsystem::Deinitialize()
 	CurrentWindowVelocities.Reset();
 	ResetWindowState();
 
+	if (UdpReceiver)
+	{
+		UdpReceiver->Stop();
+		UdpReceiver.Reset();
+	}
+
 	Super::Deinitialize();
 }
 
@@ -26,11 +44,19 @@ void UARTrailSubsystem::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	FARTrailUdpMessage Msg;
+	// UE_LOG(LogTemp, Warning, TEXT("[Tick] world=%s subsystem=%p receiver=%p dequeued=%d num=%d"), *GetNameSafe(GetWorld()), this, UdpReceiver.Get(), bDequeued, Msg.Data.Num());
+	if (UdpReceiver->DequeueMessage(Msg) && Msg.Data.Num() > 0)
+	{
+		auto Message = StringCast<TCHAR>(reinterpret_cast<UTF8CHAR*>(Msg.Data.GetData()), Msg.Data.Num());
+		UE_LOG(LogTemp, Warning, TEXT("%s"), Message.Get());
+	}
+
 	if (!bAdvanced || Trails.IsEmpty())
 	{
 		return;
 	}
-	
+
 	const int64 DeltaUs = UARTrailBlueprintFunctionLibrary::SecondsToMicroseconds(DeltaTime * SpeedRate);
 
 	// Move current time forward by delta, clamping to the last trail's timestamp to avoid overshooting
@@ -48,7 +74,7 @@ TStatId UARTrailSubsystem::GetStatId() const
 	return GetStatID();
 }
 
-void UARTrailSubsystem::LoadTrailsFromJsonFileAsync(const FString &FilePath)
+void UARTrailSubsystem::LoadTrailsFromJsonFileAsync(const FString& FilePath)
 {
 	// Prevent multiple simultaneous loads
 	if (bIsLoading)
@@ -63,7 +89,7 @@ void UARTrailSubsystem::LoadTrailsFromJsonFileAsync(const FString &FilePath)
 	FString Path = FilePath;
 	// Run the parsing in a background thread to avoid blocking the game thread
 	Async(EAsyncExecution::ThreadPool, [WeakSubsystemPtr, Path]()
-		  {
+	{
 		TArray<FARTrail> Trails;
 		FString ErrMsg;
 		// Parse the trails from the JSON file
@@ -113,10 +139,11 @@ void UARTrailSubsystem::LoadTrailsFromJsonFileAsync(const FString &FilePath)
 				          TEXT("Async trail load success. Points Num =%d"), Subsystem->Trails.Num());
 			          UE_LOG(LogTemp, Log, TEXT("%s"), *Msg);
 			          Subsystem->OnTrailsParsedFinished.Broadcast(true, Msg, Subsystem->Trails.Num());
-		          }); });
+		          });
+	});
 }
 
-void UARTrailSubsystem::GetAllTrails(TArray<FARTrail> &OutTrails) const
+void UARTrailSubsystem::GetAllTrails(TArray<FARTrail>& OutTrails) const
 {
 	OutTrails = Trails;
 }
@@ -126,17 +153,17 @@ void UARTrailSubsystem::GetAllTrails(TArray<FARTrail> &OutTrails) const
 // 	OutTrails = CurrentWindowTrails;
 // }
 
-void UARTrailSubsystem::GetCurrentWindowPositions(TArray<FVector> &OutPositions) const
+void UARTrailSubsystem::GetCurrentWindowPositions(TArray<FVector>& OutPositions) const
 {
 	OutPositions = CurrentWindowPositions;
 }
 
-void UARTrailSubsystem::GetCurrentWindowVelocities(TArray<float> &OutVelocities) const
+void UARTrailSubsystem::GetCurrentWindowVelocities(TArray<float>& OutVelocities) const
 {
 	OutVelocities = CurrentWindowVelocities;
 }
 
-void UARTrailSubsystem::GetCurrentWindowArrays(TArray<FVector> &OutPositions, TArray<float> &OutVelocities) const
+void UARTrailSubsystem::GetCurrentWindowArrays(TArray<FVector>& OutPositions, TArray<float>& OutVelocities) const
 {
 	OutPositions = CurrentWindowPositions;
 	OutVelocities = CurrentWindowVelocities;
@@ -274,7 +301,7 @@ void UARTrailSubsystem::UpdateWindow()
 	CurrentWindowVelocities.Reserve(Count);
 	for (int32 i = WindowStartIdx; i < WindowEndIdx; ++i)
 	{
-		const FARTrail &Trail = Trails[i];
+		const FARTrail& Trail = Trails[i];
 		// CurrentWindowTrails.Add(Trail);
 		CurrentWindowPositions.Add(Trail.Position);
 		CurrentWindowVelocities.Add(Trail.Velocity);
