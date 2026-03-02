@@ -1,7 +1,7 @@
 #include "ARTrailUdpReceiver.h"
 #include "Common/UdpSocketBuilder.h"
 
-constexpr int32 BufferSize = 2 * 1024 * 1024; // 2MB
+constexpr int32 BufferByteSize = 2 * 1024 * 1024; // 2MB
 
 FARTrailUdpReceiver::~FARTrailUdpReceiver()
 {
@@ -59,7 +59,7 @@ bool FARTrailUdpReceiver::CreateSocket()
 	         .AsReusable()
 	         .AsNonBlocking()
 	         .BoundToEndpoint(ListenEndpoint)
-	         .WithReceiveBufferSize(BufferSize);
+	         .WithReceiveBufferSize(BufferByteSize);
 
 	return Socket != nullptr;
 }
