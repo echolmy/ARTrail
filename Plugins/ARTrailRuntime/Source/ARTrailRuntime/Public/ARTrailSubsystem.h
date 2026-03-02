@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "ARTrailUdpReceiver.h"
 #include "Subsystems/WorldSubsystem.h"
 #include "ARTrailSubsystem.generated.h"
 
@@ -199,4 +200,6 @@ private:
 
 	/** Last TrailDuration used by UpdateWindow; duration changes force a full window rebuild. */
 	int64 LastUpdateDuration = -1;
+	
+	TUniquePtr<FARTrailUdpReceiver> UdpReceiver;
 };
