@@ -1,4 +1,6 @@
-﻿# ARTrail
+﻿![Demo](demo.gif)
+
+# ARTrail
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
